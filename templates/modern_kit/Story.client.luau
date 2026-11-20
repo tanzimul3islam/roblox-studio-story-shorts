@@ -6,6 +6,7 @@
 -- SLOW times slower and render.sh speeds it back up (~60 rendered frames per story second).
 -- Screen is black until "Go" is set on the client, and again after the take.
 local SLOW = 5
+local ROTATE_90 = true
 local StarterGui = game:GetService("StarterGui")
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
@@ -61,10 +62,10 @@ POSE.run = function(t)
 		RS = R(-0.8 * s, 0, 0.1), LS = R(0.8 * s, 0, -0.1), RE = R(1.2, 0, 0), LE = R(1.2, 0, 0) }
 end
 POSE.wave = function(t) return { Neck = R(0, -0.15, 0.08), Waist = R(0.02, 0, 0),
-	RS = R(0.2, 0, 2.5 + 0.25 * sn(t * 8)), RE = R(0.4 + 0.3 * sn(t * 8), 0, 0), LS = R(0, 0, -0.08) } end
+	RS = R(0.35, 0, 1.85 + 0.22 * sn(t * 8)), RE = R(0.4 + 0.3 * sn(t * 8), 0, 0), LS = R(0, 0, -0.08) } end
 POSE.cheer = function(t)
 	local b = math.abs(sn(t * 5))
-	return { Root = CFrame.new(0, 0.35 * b, 0), RS = R(0, 0, 2.75 + 0.15 * sn(t * 10)), LS = R(0, 0, -2.75 - 0.15 * sn(t * 10)),
+	return { Root = CFrame.new(0, 0.35 * b, 0), RS = R(0.3, 0, 1.9 + 0.15 * sn(t * 10)), LS = R(0.3, 0, -1.9 - 0.15 * sn(t * 10)),
 		RE = R(0.2, 0, 0), LE = R(0.2, 0, 0), RK = R(-0.4 * (1 - b), 0, 0), LK = R(-0.4 * (1 - b), 0, 0), Neck = R(0.15, 0, 0) }
 end
 POSE.point = function(t) return { RS = R(1.5, 0, 0.1), RE = R(0.05, 0, 0), Waist = R(-0.03, -0.12, 0), LS = R(0, 0, -0.08),
@@ -81,12 +82,12 @@ POSE.sit = function(t) return { Root = CFrame.new(0, -1.15, 0.3), RH = R(1.5, 0,
 POSE.jump = function(t)
 	local h = math.abs(sn(t * PI * 1.2))
 	return { Root = CFrame.new(0, 1.4 * h, 0), RK = R(-0.9 * (1 - h), 0, 0), LK = R(-0.9 * (1 - h), 0, 0),
-		RH = R(0.5 * (1 - h), 0, 0), LH = R(0.5 * (1 - h), 0, 0), RS = R(0, 0, 0.6 + 1.6 * h), LS = R(0, 0, -0.6 - 1.6 * h) }
+		RH = R(0.5 * (1 - h), 0, 0), LH = R(0.5 * (1 - h), 0, 0), RS = R(0.25, 0, 0.5 + 1.35 * h), LS = R(0.25, 0, -0.5 - 1.35 * h) }
 end
 POSE.dance = function(t)
 	local b, s = math.abs(sn(t * 4)), sn(t * 4)
 	return { Root = CFrame.new(0, 0.22 * b, 0), Waist = R(0, 0.25 * sn(t * 2), 0.12 * s),
-		RS = R(0, 0, 1.3 + 0.8 * s), LS = R(0, 0, -1.3 + 0.8 * s), RE = R(0.6, 0, 0), LE = R(0.6, 0, 0),
+		RS = R(0.25, 0, 1.15 + 0.55 * s), LS = R(0.25, 0, -1.15 - 0.55 * s), RE = R(0.6, 0, 0), LE = R(0.6, 0, 0),
 		RH = R(0.2 * s, 0, 0), LH = R(-0.2 * s, 0, 0), RK = R(-0.3 * b, 0, 0), LK = R(-0.3 * b, 0, 0) }
 end
 POSE.dance2 = function(t)
@@ -98,7 +99,7 @@ end
 POSE.dance3 = function(t)
 	local s = sn(t * 2 * PI * 0.6)
 	return { Root = CFrame.new(0.45 * s, 0.15 * math.abs(sn(t * 4)), 0), Waist = R(0, 0, -0.1 * s),
-		RS = R(0, 0, 2.3 + 0.4 * sn(t * 4)), LS = R(0, 0, -2.3 - 0.4 * sn(t * 4)), RE = R(0.3, 0, 0), LE = R(0.3, 0, 0),
+		RS = R(0.25, 0, 1.65 + 0.25 * sn(t * 4)), LS = R(0.25, 0, -1.65 - 0.25 * sn(t * 4)), RE = R(0.3, 0, 0), LE = R(0.3, 0, 0),
 		RH = R(0, 0, 0.12 * s), LH = R(0, 0, 0.12 * s) }
 end
 local JOINT = { Root = { "LowerTorso", "Root" }, Waist = { "UpperTorso", "Waist" }, Neck = { "Head", "Neck" },
@@ -282,8 +283,13 @@ RunService:BindToRenderStep("StoryCamera", Enum.RenderPriority.Camera.Value + 1,
 	if s[4] then s[4](t, a) end
 	applyPoses(t)
 	local eye, target, fov = s[3](ease(a))
-	cam.FieldOfView = fov
-	cam.CFrame = CFrame.lookAt(eye, target)
+	if ROTATE_90 then
+		cam.FieldOfView = math.clamp(fov * 0.65, 24, 42)
+		cam.CFrame = CFrame.lookAt(eye, target) * CFrame.Angles(0, 0, math.rad(-90))
+	else
+		cam.FieldOfView = fov
+		cam.CFrame = CFrame.lookAt(eye, target)
+	end
 end)
 
 -- Start a take: set workspace attribute "Go" on the client. The take begins DELAY real

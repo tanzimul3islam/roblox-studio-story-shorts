@@ -813,12 +813,13 @@ function CL.build(name, o)
 	-- sleeves (short sleeves = shirt cuff over the upper arm) and hands for long sleeves
 	for _, arm in ipairs({ la, ra }) do
 		if long then
-			deco(m, arm, "Hand", V(1.01, 0.4, 1.01), CF(0, -0.8, 0), skin)
-			deco(m, arm, "Cuff", V(1.04, 0.14, 1.04), CF(0, -0.55, 0), shirt:Lerp(INK, 0.12), nil, o.knit and M.Fabric or nil)
+			deco(m, arm, "Hand", V(1.02, 0.44, 1.02), CF(0, -0.8, 0), skin)
+			deco(m, arm, "Cuff", V(1.05, 0.14, 1.05), CF(0, -0.55, 0), shirt:Lerp(INK, 0.12), nil, o.knit and M.Fabric or nil)
 		else
-			deco(m, arm, "Sleeve", V(1.04, o.chef and 1.35 or 1.0, 1.04), CF(0, 0.5, 0), shirt, nil, o.knit and M.Fabric or nil)
+			deco(m, arm, "Sleeve", V(1.05, o.chef and 1.38 or 1.04, 1.05), CF(0, 0.51, 0), shirt, nil, o.knit and M.Fabric or nil)
 		end
 	end
+	local ARMFACES = { Enum.NormalId.Front, Enum.NormalId.Back, Enum.NormalId.Left, Enum.NormalId.Right }
 	for _, leg in ipairs({ ll, rl }) do
 		deco(m, leg, "Shoe", V(1.03, 0.34, 1.2), CF(0, -0.84, -0.09), o.shoeColor or C3(40, 40, 45))
 		deco(m, leg, "Sole", V(1.05, 0.12, 1.22), CF(0, -0.98, -0.09), C3(235, 228, 213))
@@ -826,12 +827,12 @@ function CL.build(name, o)
 	-- prints on the clothes
 	if o.knit then
 		paint(torso, ALLFACES, function(g) knit(g, shirt) end)
-		if long then for _, a in ipairs({ la, ra }) do paint(a, ALLFACES, function(g) knit(g, shirt) end) end end
+		if long then for _, a in ipairs({ la, ra }) do paint(a, ARMFACES, function(g) knit(g, shirt) end) end end
 	end
 	if o.floral then
 		local f = o.floral
 		paint(torso, ALLFACES, function(g) floral(g, shirt, f[1], f[2], f[3], #name * 13, 18) end)
-		if long then for i, a in ipairs({ la, ra }) do paint(a, ALLFACES, function(g) floral(g, shirt, f[1], f[2], f[3], i * 31, 9) end) end end
+		if long then for i, a in ipairs({ la, ra }) do paint(a, ARMFACES, function(g) floral(g, shirt, f[1], f[2], f[3], i * 31, 9) end) end end
 	end
 	if o.denim then for _, l in ipairs({ ll, rl }) do paint(l, { Enum.NormalId.Front, Enum.NormalId.Back }, function(g) denim(g, pants) end) end end
 	if o.shirtText then

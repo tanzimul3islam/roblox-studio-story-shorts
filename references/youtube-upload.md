@@ -5,26 +5,17 @@ Brand files and their generator: `/var/mnt/sda3/Roblox_Shorts/channel/` (`make_b
 `logo_800.png`, `banner_2560x1440.png`). Logo and banner are drawn (mascot = blocky yellow
 head with a pet cloud); the user rejected brand art cut from video frames.
 
-## Browser
-Claude in Chrome (the user is signed in there). Work in your own tab group. `file_upload` caps
-at 10 MB per call, so make an upload copy first (2-pass x264, use per-stream pass flags or
-the AAC stream errors):
-```bash
-F=/var/mnt/sda3/tools/ffmpeg/bin/ffmpeg; T=<scratch>/x264pass
-$F -y -i <Short>.mp4 -c:v libx264 -preset slow -b:v 1550k -pass:v 1 -passlogfile:v $T -an -f null -
-$F -y -i <Short>.mp4 -c:v libx264 -preset slow -b:v 1550k -maxrate 2500k -bufsize 3100k \
-   -pass:v 2 -passlogfile:v $T -profile:v high -pix_fmt yuv420p -c:a aac -b:a 128k \
-   -movflags +faststart <Short>_upload.mp4
-```
-For 43 s this gave 9.1 MB at SSIM 0.991. Scale `-b:v` down for longer shorts (target <= 9.5 MB).
+## Browser & Upload Method
+Browser subagent (user is already signed in on `https://studio.youtube.com/channel/UCwhxWQE5AoAXNvJuJCZAmfQ`).
+**Standing rule (Nov 2026):** The user drags the **full-quality `<Short>.mp4`** directly into the YouTube Studio upload dialog! Do **not** create a compressed `<10 MB` `_upload.mp4` or use `file_upload` unless the user explicitly asks for it.
 
 ## Upload flow (Studio upload dialog, `/videos/upload?d=ud`)
-1. `find` the hidden `file-input` in the dialog, `file_upload` the `_upload.mp4`.
+1. Open `https://studio.youtube.com/channel/UCwhxWQE5AoAXNvJuJCZAmfQ/videos/upload?d=ud` so the "Upload videos" dialog is ready, then tell the user to drag `<Short>.mp4` into the window. Wait for them to confirm it's dropped.
 2. Title: triple-click the title box, ctrl+a, type. Description: click, type. Title style:
    "In This World, <Premise> <emoji>" (like flookus / Ryex). Description: 1-2 teaser lines,
    "A short story filmed in Roblox Studio. New story every week!", `#roblox #robloxstory
    #shorts`, then "Unofficial fan content, not affiliated with or endorsed by Roblox Corporation."
-3. Audience: **Yes, it's made for kids** (channel decision).
+3. Audience: **No, it's not made for kids** (standing channel upload setting, Nov 2026 — keep stories wholesome, but set "No, it's not made for kids" on YouTube).
 4. "Show more" → **AI use** question: this is the user's own declaration. Leave it for the
    user (the permission layer blocks Claude from answering it). Facts to give them: Pocket TTS
    narration (AI voice) of a fictional kid; cartoon Roblox visuals; procedural background

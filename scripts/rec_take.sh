@@ -8,13 +8,17 @@ SEC=${1:-62}
 TITLE=${2:-"- Roblox Studio"}
 K=$(dirname "$(readlink -f "$0")")
 OBS="python3 -I $K/obsws.py"
-CUR=$(host-spawn --no-pty swaymsg -t get_workspaces | python3 -c "import json,sys;print([w['num'] for w in json.load(sys.stdin) if w['focused']][0])")
-host-spawn --no-pty swaymsg "[title=\"$TITLE\"] focus" >/dev/null
-host-spawn --no-pty swaymsg seat - cursor set 1900 1075 >/dev/null
+SPAWN=""
+if command -v host-spawn >/dev/null 2>&1; then
+    SPAWN="host-spawn --no-pty"
+fi
+CUR=$($SPAWN swaymsg -t get_workspaces | python3 -c "import json,sys;print([w['num'] for w in json.load(sys.stdin) if w['focused']][0])")
+$SPAWN swaymsg "[title=\"$TITLE\"] focus" >/dev/null
+$SPAWN swaymsg seat - cursor set 1900 1075 >/dev/null
 $OBS start || { sleep 3; $OBS start; }
 echo "recording started $(date +%T)"
 sleep "$SEC"
 $OBS stop || { sleep 3; $OBS stop; } || { sleep 5; $OBS stop; }
-host-spawn --no-pty swaymsg workspace number "$CUR" >/dev/null
+$SPAWN swaymsg workspace number "$CUR" >/dev/null
 $OBS status
 ls -t /var/mnt/sda3/Roblox_Shorts/studio/obs_recordings/*.mp4 | head -1

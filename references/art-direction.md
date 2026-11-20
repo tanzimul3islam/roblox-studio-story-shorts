@@ -39,14 +39,45 @@ real logos, brand names or licensed characters on signs or clothes.
   stadium, castle...) and keep them in the kit. The board's other ideas: restaurants, hotels,
   stores, factories, farms, beaches, caves, space bases.
 
-## 3. Characters: the house style (classic blocky cast) + older presets
+## 3. Characters: Pure R6 Dressed UGC Avatars + Classic Blocky Cast
 
-**House style since 2026-11-14 (the user's reference shorts, e.g. cooking-class and
-playground Roblox story Shorts):** classic blocky R6 bodies with the rounded Roblox head,
+### A. Pure R6 Dressed UGC Avatars (`templates/moon_aura_kit/Server.luau`, Nov 2026)
+Matches the high-production R6 UGC shorts style (see `assets/moon_aura_contact_sheet.png`):
+- **Standard R6 Rig (`Enum.HumanoidRigType.R6`):** Created via
+  `Players:CreateHumanoidModelFromDescription(desc, Enum.HumanoidRigType.R6)`. Uses standard
+  Roblox R6 `Motor6D` orientations (`RootJoint`, `Neck`, `Right Shoulder`, `Left Shoulder`,
+  `Right Hip`, `Left Hip`), so Moon Animator 2 `AnimationTrack`s (`R6Walk` and custom `.moon2`
+  exports) play natively.
+- **Root anchored, limbs unanchored:** Set `HumanoidRootPart.Anchored = true`, and ensure all
+  limbs and accessory `Handle` parts have `Anchored = false`, `CanCollide = false`,
+  `Massless = true`. Remove the default `Animate` LocalScript and `Head.face` decal.
+- **UGC Catalog Accessories & Layered Look on R6:**
+  - Discover live catalog IDs in Studio via `AvatarEditorService:SearchCatalog(params)` —
+    **always pass `params.Limit = 10`** (passing `Limit = 8` throws `HTTP 400`).
+  - Note: Roblox drops R15 `WrapLayer` cage layered clothing on pure R6 rigs (`WrapLayer` has no
+    R15 cage target on R6). Achieve the 3D layered outfit look on pure R6 by combining Classic
+    `Shirt` + `Pants` textures with rigid 3D UGC accessories:
+    - `HatAccessory` (e.g. red baseball cap `14510395236` or black cap `18221906655`)
+    - `HairAccessory` (chunky sculpted hair meshes, e.g. messy curly brown hair `13433327568`,
+      blonde anime hair `18899378507`)
+    - `NeckAccessory` (3D hoodie hood `16095109571`, knit scarf `16467566865`)
+    - `FrontAccessory` (3D crossbody bag `8084645500`)
+    - `BackAccessory` (3D backpacks `18166247145`, `139196487384313`, `76674853264828`)
+    - Welded 3D sneakers (`Shoe` + `Sole` parts on `Left Leg` / `Right Leg`).
+- **Hat & Hair Weld Clearance Over the 2D `FacePlate` (critical):**
+  - Chunky UGC hair bangs and baseball cap brims often hang slightly over the upper forehead where
+    the 2D `FacePlate` draws eyebrows.
+  - **After** `m.Parent = workspace; task.wait(0.1)` (so `AccessoryWeld` exists on each `Handle`),
+    nudge `Hat` and `Hair` welds upward/back in `Head` space (`hatOffset = CF(0, 0.20, 0.08) *
+    CFrame.Angles(math.rad(14), 0, 0)`, `hairOffset = CF(0, 0.03..0.07, 0.06)`). Verify with a
+    close-up `screen_capture` that eyebrows and eyes are 100% unobstructed and the cap sits cleanly
+    above the hair crown.
+
+### B. Code-Built Classic Blocky Cast (`templates/modern_kit/Server.luau`)
+**House style since 2026-11-14 (e.g. cooking-class and playground Roblox story Shorts):** classic blocky R6 bodies with the rounded Roblox head,
 BIG hand-drawn 2D faces, clothes painted on the blocks like Roblox shirt textures (knit
 sweaters, bold floral prints, chef coat buttons, aprons, denim), chunky sculpted hair, kids
-smaller than adults. `STYLE.body = "classic"` routes `actor()` to `CL.build`. This replaces
-the earlier chibi/anime pick. Built on ChatGPT's ReferenceCast rig
+smaller than adults. `STYLE.body = "classic"` routes `actor()` to `CL.build`. Built on ChatGPT's ReferenceCast rig
 (`/var/mnt/sda3/Roblox_Shorts/ReferenceCast/`), improved.
 - Cast recipes in `REF`: Milo (young cook, apron), Rose (grandma, floral, bun), Lily
   (granddaughter, floral, long hair, denim), Andre (chef, blonde quiff), Noah (parent, all
@@ -92,24 +123,46 @@ the earlier chibi/anime pick. Built on ChatGPT's ReferenceCast rig
   the simpler `OUT.*` set; pass `outfit = function(m) ... end` to `actor`.
 - Use varied, natural skin tones across the cast.
 
-## 4. Looks that make it attractive
-- Lighting: `lookModern(clock)` (soft sun, atmosphere, light bloom, sun rays). Interiors
-  have warm ceiling + lamp PointLights; exteriors have lit windows and street lights. For
-  night scenes use clock 19-20 with the same look and switch the room lights on.
-- Colour: soft whites and pale walls + **one strong accent per frame** (a door, a sofa, an
-  outfit). Avoid the flat saturated pastels of v1.
-- Depth: put something in the foreground or background of every shot (plant, lamp, car,
-  tree, window view). Never frame a character against a blank wall or empty grass.
+## 4. Looks that make it attractive (High-Quality Future Lighting, Fog, Bloom & DoF)
+- **High-quality Studio rendering (`Level21`):** Set `settings().Rendering.QualityLevel = Enum.QualityLevel.Level21`
+  and `EditQualityLevel = Enum.QualityLevel.Level21` in Studio (`test02.rbxlx` uses
+  `Lighting.Technology = Future` and `PrioritizeLightingQuality = true`).
+- **Soft shadows & golden-hour warm lighting:** `Lighting.GlobalShadows = true`,
+  `Lighting.ShadowSoftness = 0.6`, `ClockTime = 16.75`, `Brightness = 2.05`,
+  `ExposureCompensation = -0.32`, warm `ColorShift_Top = C3(255, 222, 175)`.
+- **Volumetric depth fog (`Atmosphere`):** `Density = 0.42`, `Offset = 0.15`, `Haze = 2.4`,
+  `Glare = 0.35`, `Color = C3(255, 212, 165)`, `Decay = C3(170, 125, 108)`. Separates close-up
+  characters from background trees, buildings, and skyline silhouettes.
+- **Bloom without face/hair blowout (`BloomEffect`):** Set `Threshold = 1.95`, `Intensity = 0.42`,
+  `Size = 24`, and keep character `AuraLight.Brightness` around `1.15–1.8`. A threshold of `1.1`
+  blows out blonde hair and pale faces in direct sun; at `1.95`, skin and hair stay crisp while
+  `LightEmission = 1` aura particles and `Neon` street lamps still glow richly.
+- **Background blur (`DepthOfFieldEffect`):** Controlled per shot via `blur(focusDist, radius, far)`
+  (e.g. `blur(5.2, 3.0, 0.75)` on close-ups). Place warm `Neon` street lamps (`z = -6` and `z = -16`)
+  and lit building windows in the background so they blur into creamy golden bokeh orbs.
+- **Color grading (`ColorCorrectionEffect`):** `TintColor = C3(255, 240, 222)`,
+  `Saturation = 0.22–0.26`, `Contrast = 0.14–0.18`, `Brightness = -0.04`.
+- **Colour & depth:** Put something in the foreground or background of every shot (street lamp,
+  tree, fence, warm window view). Never frame a character against a blank wall or empty grass.
 - Fill the 9:16 frame: the crop keeps only the centre third of the viewport, so stack
   interest vertically (character + window/lamp/shelf above) instead of spreading sideways.
 - Interior camera: look in through the open +Z side (rooms are cut-aways), 10-16 studs from
   the back wall, eye height 4.5-7, fov 45-55. Close-ups 4-6 studs from the face, fov 38-42.
 - Performance: every extra part costs Studio frame rate (we capture 5x slow, so it is
   forgiving, but keep a scene under ~2,500 parts and delete kit pieces the story never sees).
+- **Spacing & self-clipping (standing rule, Nov 2026):** Keep at least `4.5–6` studs between
+  actors in group shots, and keep actors well clear of furniture (`K.woodTable`, `K.bed`),
+  walls, and FX beams so bodies never overlap. Cap sideways arm-raise poses (`Z <= 2.05` rad
+  plus forward `+0.25..0.35 X`) so hands never clip into blocky heads or hair.
+- **No Z-fighting / flickering (standing rule, Nov 2026):** Never place two parts with
+  coplanar faces or identical widths overlapping on the same axis (e.g., stagger background
+  mountains' `Z` and depth, and give multi-part props like trains distinct widths/offsets).
 
 ## 5. Contact-sheet checklist (step 8)
 Reject and fix a take if any frame shows:
 - a character without an outfit, or two characters that look alike;
+- actors overlapping each other, furniture, or props, or hands clipping into heads;
+- Z-fighting / flickering on overlapping coplanar parts (mountains, vehicles, walls);
 - the camera inside a wall, prop or ceiling, or a room seen from outside its open side;
 - an empty background (blank wall, bare grass, sky only) behind a close-up;
 - a slow or empty first 2 seconds: the frames at 0, 0.5, 1 and 2 s must each show a face

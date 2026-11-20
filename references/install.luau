@@ -37,5 +37,13 @@ for path in string.gmatch(workspace:GetAttribute("StoryDisabled") or "", "[^;]+"
 	if inst and inst ~= game then inst.Disabled = false end
 end
 workspace:SetAttribute("StoryDisabled", nil)
+workspace:SetAttribute("AnimsReady", nil)
+workspace:SetAttribute("Go", nil)
+for _, svc in ipairs({ game:GetService("ReplicatedStorage"), game:GetService("ServerStorage") }) do
+	for _, n in ipairs({ "MoonAnims", "MoonAnimator2Saves" }) do
+		local f = svc:FindFirstChild(n)
+		if f then f:Destroy() end
+	end
+end
 return "restored"
 ]]

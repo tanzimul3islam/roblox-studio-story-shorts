@@ -8,12 +8,23 @@ in my stories."** Every story follows this look. A filmed example of our matchin
 `assets/house_style_contact_sheet.png` (the kit's `REF` cast, 2026-11-14).
 
 ## Characters (what to copy in spirit, never copy exactly)
-- **Classic blocky Roblox bodies** (R6: block torso, arms, legs; no elbows or knees) with the
-  rounded classic head. Kids clearly smaller than adults; babies tiny.
-- **Big drawn 2D faces** that fill the head and change every beat: huge toothy grins,
+- **Pure R6 dressed UGC avatars (`templates/moon_aura_kit/`) or classic blocky R6 bodies (`templates/modern_kit/`)**:
+  block torso, arms, legs (no elbows or knees) with the rounded classic head. Kids clearly
+  smaller than adults; babies tiny.
+- **UGC layered streetwear & accessories (`moon_aura_kit`)**: chunky sculpted UGC hair meshes
+  (messy brown curls, blonde anime locks), baseball caps tilted clear of the eyebrows, 3D hoodie
+  hoods and knit scarves (`NeckAccessory`), crossbody bags (`FrontAccessory`), 3D backpacks
+  (`BackAccessory`), Classic hoodie/sweater `Shirt` + jeans `Pants`, and 3D sneakers.
+- **Poses & walks from Moon Animator 2 (`moon_aura_kit`)**: keyframes posed with Moon Animator 2
+  easing (`Sine`, `Cubic`, `Back`, `Quad`) and exported via the installed Moon Animator 2 plugin
+  (`_G.MoonGlobal`) as reusable Roblox `AnimationTrack`s (plus Moon Animator 2's built-in `R6Walk`).
+- **Glowing Roblox `ParticleEmitter` auras (`moon_aura_kit`)**: multi-layer rising energy flames,
+  sparkles, and radial core glow (`LightEmission = 1`, `TimeScale = 1 / SLOW`) plus a matching
+  torso `PointLight`.
+- **Big drawn 2D faces** that fill the head and swap every 1-2 s beat: huge toothy grins,
   angry slanted brows with a frown, spiral "dizzy" eyes with a wobbly mouth, round glasses,
-  smug half-lidded eyes, closed laughing eyes (^^), gritted-teeth worry.
-- **Clothes printed on the blocks**, like Roblox shirt textures: knit sweaters, bold floral
+  smug half-lidded eyes, closed laughing eyes (^^), wide shocked O-mouths, gritted-teeth worry.
+- **Clothes printed on the blocks (`modern_kit`)**, like Roblox shirt textures: knit sweaters, bold floral
   blouses, a chef coat with buttons and a collar line, aprons with straps and dots, jeans,
   black hoodies, a baby onesie with a short slogan.
 - **Chunky hair**: messy brown locks over the forehead, grey/white grandma buns, long brown

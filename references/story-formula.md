@@ -78,7 +78,7 @@ event, and a choice or sacrifice before the payoff.
   second of target length (45 s ~ 150 words; 2:20 ~ 460 words). Short sentences; each one
   should be showable.
 - Every sentence should map to a picture, because each one becomes a 1.5-3 s shot.
-- **Kid-safe** (the channel is Made for Kids): wonder, family, friendship and a twist; no death,
+- **Kid-safe & wholesome** (keep stories family-friendly, though YouTube upload is set to **"No, it's not made for kids"**): wonder, family, friendship and a twist; no death,
   gore, real danger to kids or scary imagery. Swap flookus-style deaths for loss, drought,
   being lost, being laughed at, and similar kid-sized stakes.
 - Avoid lines Pocket TTS swallows: very short questions ("But mine?" was heard as "Bye-bye"),

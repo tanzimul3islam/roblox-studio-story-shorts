@@ -3,11 +3,7 @@
 ## Machine facts
 - Fedora 44 Sway Atomic host. Claude runs in the `claude-debian` distrobox; reach the host with
   `host-spawn --no-pty ...` (swaymsg, flatpak).
-- Roblox Studio runs in Bottles Flatpak `com.usebottles.bottles`, bottle `RobloxStudio__138`,
-  runner soda-11.0-10. The MCP server `Roblox_Studio` (user scope in ~/.claude.json) is the
-  launcher `/var/home/tanzimul/.local/share/distrobox-homes/chatgpt-ubuntu-test/.codex/bin/roblox-studio-mcp`
-  which `flatpak enter`s the **running** Studio's sandbox. Never start the MCP with a new
-  `flatpak run` session (conflicting Wine sessions froze Studio).
+- Roblox Studio runs via TuxBlox (`~/.tuxblox`). The MCP server `Roblox_Studio` connects via `/var/home/tanzimul/.local/share/distrobox-homes/chatgpt-ubuntu-test/.codex/bin/roblox-studio-mcp` (which launches `/var/home/tanzimul/.tuxblox/studio-mcp`).
 - Always call `list_roblox_studios` first and use the returned `studio_id`; ids change every
   Studio session.
 - ffmpeg/ffprobe: `/var/mnt/sda3/tools/ffmpeg/bin/` (host ffmpeg cannot decode H.264; none in
@@ -49,15 +45,10 @@ and re-measure before rendering. Moving the window to another workspace is fine.
 - Stop the scene server with `pkill -f "[h]ttp.server 8765"` (the bracket stops pkill from
   matching, and killing, its own shell).
 - After a crash the MCP tools report no studios or disconnect.
-- Relaunch Studio with the user's OK, using the same command the user's setup used:
+- Relaunch Studio with TuxBlox:
   ```bash
-  nohup host-spawn --no-pty env FLATPAK_USER_DIR=/var/mnt/sda3/flatpak flatpak run \
-    --filesystem=/var/mnt/sda3/Roblox_Shorts --command=bottles-cli com.usebottles.bottles \
-    run -b RobloxStudio__138 -e '<...>\Roblox\Versions\<version>\RobloxStudioBeta.exe' \
-    -- 'Z:\var\mnt\sda3\Roblox_Shorts\studio\short02\short02.rbxlx' >/dev/null 2>&1 &
+  ~/.tuxblox/TuxBloxLauncher --studio
   ```
-  Find `<version>` with `ls /var/mnt/sda3/bottles-data/data/bottles/bottles/RobloxStudio__138/drive_c/users/tanzimul/AppData/Local/Roblox/Versions/`
-  (the folder containing RobloxStudioBeta.exe). Wait for the window title to show a place.
 - After a crash Studio may open `short02_AutoRecovery_0.rbxl` instead; that is fine to work
   in (it is a separate file). Pass its title to rec_take.sh if needed.
 - If the Claude session's Roblox_Studio MCP server shows "connection closed", the user has to

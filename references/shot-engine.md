@@ -1,25 +1,81 @@
-# Scene scripts and the shot engine
+# Scene scripts, Moon Animator 2 tracks, and the shot engine
 
-Start from `templates/modern_kit/` (Server.luau = kit + SCENE, Story.client.luau = engine +
-CAST/SHOTS). Copy the folder to `/var/mnt/sda3/Roblox_Shorts/studio/<scene_name>/` and edit;
-do not start from scratch. `templates/pet_cloud/` is the first short, kept as an example of
-time-driven props (clouds, rain). Modern-kit helpers on the client: `put(name, pos, lookAt)`
+Start from `templates/moon_aura_kit/` (for **pure R6 UGC avatars + Moon Animator 2 `AnimationTrack`s +
+Roblox `ParticleEmitter` auras**) or `templates/modern_kit/` (for code-built classic rigs + procedural
+Motor6D poses). Copy the folder to `/var/mnt/sda3/Roblox_Shorts/studio/<scene_name>/` and edit;
+do not start from scratch. Modern-kit / Moon-Aura helpers on the client: `put(name, pos, lookAt)`
 with Vector3 positions (y = floor), `S("SpotName")` for a spot's position, `on(name, off0,
-off1, fov)` for a camera framed on an actor's head, `move(...)` for a moving camera.
+off1, fov)` for a camera framed on an actor's head, `move(...)` for a moving camera, `pose(name,
+animName, looped, startOffset)` for Moon Animator 2 `AnimationTrack`s, `face(name, expr)` for
+per-beat 2D face switching, `aura(name, mode)` for particle auras, and `blur(focus, radius, far)`
+for `DepthOfFieldEffect`.
 
 ## Split of work (important)
-- **Server.luau** builds only static things: the set (parts in a `Set` folder) and the actors
-  (`Players:CreateHumanoidModelFromDescription`, R15, root anchored, `Animate` script removed,
-  parked at y = -200). Actor creation must stay on the server; it fails on the client.
-- **Story.client.luau** does everything that moves or changes: actor placement, animations,
-  props (clouds, rain), lighting looks, part colours, and the camera.
+- **BuildMoonAnims.luau** (Edit mode, before playtest): uses the installed **Moon Animator 2**
+  plugin (`_G.MoonGlobal`) to author `.moon2` save files in `ServerStorage.MoonAnimator2Saves`
+  and run Moon Animator 2's own `OpenFile` -> `ExportRigs(true)` -> `CloseFile()` pipeline,
+  exporting eased 60 FPS `KeyframeSequence`s (plus Moon Animator 2's built-in `R6Walk`) into
+  `ReplicatedStorage.MoonAnims`.
+- **Server.luau** builds static things: high-quality lighting (`Level21`, `Future`, soft shadows,
+  warm `Atmosphere` fog, `BloomEffect` with `Threshold = 1.95`, `ColorCorrectionEffect`,
+  `SunRaysEffect`, `DepthOfFieldEffect`), the set (parts in a `Set` folder), and the actors
+  (`Players:CreateHumanoidModelFromDescription(..., Enum.HumanoidRigType.R6)` for pure R6 UGC
+  avatars or `CL.build` for code-built rigs, `HumanoidRootPart.Anchored = true`, limbs and
+  accessory handles unanchored & massless, `Animate` script removed, `FacePlate` and `ParticleEmitter`
+  auras attached, parked at y = -200). Actor creation must stay on the server; it fails on the client.
+- **Story.client.luau** does everything that moves or changes: actor placement, Moon Animator 2
+  `AnimationTrack` playback (or procedural poses), `face(name, expr)`, `aura(name, mode)`,
+  `blur(focus)`, lighting grade tweaks, and the camera.
 
-Why: in Studio under Wine, server-driven motion (PivotTo every frame on R15 rigs) replicated to
-the client 30+ s late, so the camera filmed a frozen scene. Client-side changes render
-immediately and are never replicated, which is exactly what a recording needs.
+Why: in Studio under Wine, server-driven motion replicated to the client 30+ s late, so the camera
+filmed a frozen scene. Client-side changes render immediately and are never replicated, which is
+exactly what a recording needs.
 
-Space actor creation (`task.wait(0.2)` after each) and keep the effects light (no
-DepthOfField, a few hundred moving parts at most): a heavy playtest start crashed Studio once.
+## Moon Animator 2 plugin pipeline (`BuildMoonAnims.luau` + `AnimationTrack` sync)
+The installed Moon Animator 2 plugin (`/home/tanzimul/.tuxblox/roblox/Plugins/RobloxMoonAnim.rbxmx`)
+exposes `_G.MoonGlobal` in Studio:
+1. **R6 hierarchy & C1 keyframe math:**
+   - Moon Animator 2's built-in R6 rig is `_G.MoonGlobal.rigs.R6`, and its built-in R6 walk is
+     `_G.MoonGlobal.anis.R6Walk` (22 keyframes, `0.667 s` loop).
+   - `_G.MoonGlobal.RigHierarchy(rig)` paths for R6 are: `"Torso"` (`RootJoint`), `"Torso.Head"`
+     (`Neck`), `"Torso.Right Arm"` (`Right Shoulder`), `"Torso.Left Arm"` (`Left Shoulder`),
+     `"Torso.Right Leg"` (`Right Hip`), `"Torso.Left Leg"` (`Left Hip`).
+   - In `.moon2` files, `MotorTrack` animates `Motor6D.C1` and `_G.MoonGlobal.ExportItemObject`
+     computes `Pose.CFrame = value:toObjectSpace(defaultValue) = keyframeC1:Inverse() * restC1`.
+     Therefore, to get a desired `Motor6D.Transform` in the exported `KeyframeSequence`, store:
+     ```lua
+     v0.Value = restC1 * desiredTransform:Inverse()
+     ```
+   - Measured standard R6 `Transform` axes:
+     - `Torso` (`RootJoint`): pos `+Z` = up, `-Z` = crouch down; rot `+X` = lean forward, `-X` = lean back, `+Z` = yaw left.
+     - `Head` (`Neck`): rot `+X` = nod down, `-X` = look up, `+Y` = tilt left, `+Z` = turn left.
+     - `Right Arm` (`Right Shoulder`): rot `+Z` = swing forward, `-Z` = swing back, `-X` = raise outward (`+X` world).
+     - `Left Arm` (`Left Shoulder`): rot `-Z` = swing forward, `+Z` = swing back, `-X` = raise outward (`-X` world).
+     - `Right Leg` (`Right Hip`): rot `+Z` = swing forward, `-Z` = swing back, `-X` = widen outward.
+     - `Left Leg` (`Left Hip`): rot `-Z` = swing forward, `+Z` = swing back, `-X` = widen outward.
+2. **Runtime `AnimationTrack` registration & playback on Client:**
+   - Register each `KeyframeSequence` in `ReplicatedStorage.MoonAnims` with
+     `KeyframeSequenceProvider:RegisterKeyframeSequence(seq)`.
+   - **Important:** `RegisterKeyframeSequence` returns a 32-character hex hash (e.g.
+     `"a970fbdda1998499e9d5db6f8931fdc7"`). Assign that raw hash **directly** to
+     `anim.AnimationId = id`. Never prepend `"rbxassetid://"` to a 32-char hash (Roblox sanitizes
+     `"rbxassetid://1b72..."` into `"rbxassetid://1"`, causing asset-not-found errors).
+   - Play tracks at `1 / SLOW` speed (`track:Play(0, 1, 1 / SLOW)`) and lock `track.TimePosition`
+     to `shotElapsed` in `RenderStepped` (`if math.abs(tr.TimePosition - targetPos) > 0.08 then tr.TimePosition = targetPos end`)
+     so animations never drift from story time under Wine frame rate fluctuations.
+
+## ParticleEmitter auras & `TimeScale = 1 / SLOW`
+Roblox `ParticleEmitter`s run in real time by default. When capturing at `SLOW = 5`:
+- Set **`pe.TimeScale = 1 / SLOW` (`0.2`)** on every `ParticleEmitter` in the scene (character
+  auras and ambient sunset dust motes). When `render.sh` speeds the video up 5x, the particles
+  move at exact 1x natural speed at 60 fps!
+- Mount `AuraFlames` (`rbxasset://textures/particles/fire_main.dds`) and `AuraCore`
+  (`rbxasset://textures/glow.png`) on a `Torso` attachment offset slightly behind the torso
+  (`AuraBackAttach`, `Position = Vector3.new(0, -0.35, 0.45)`) so the glowing aura frames the
+  character's shoulders and head without covering the 2D `FacePlate`. Mount `AuraSparks`
+  (`rbxasset://textures/particles/sparkles_main.dds`) at `AuraCenterAttach` (`Vector3.new(0, -0.2, 0)`).
+- On every shot cut that enables an aura (`aura(name, "full"|"burst"|"tiny")`), immediately call
+  `pe:Emit(14..28)` so frame 1 of a 1-second shot already has a rich glowing aura.
 
 ## Client structure (keep these parts as they are)
 1. Hide CoreGui and the top bar; a full-screen **black Frame** shown whenever no take is live.
@@ -72,10 +128,10 @@ and a gesture pose. The next shot starts by 2.0 s at the latest. If the hook is 
 flash-forward, the shot at ~2 s goes back to the start of the story (stage it in that shot's
 setup). See the modern_kit template's first three shots.
 
-## Framing for the 9:16 crop
-The recording is cropped to the middle 460x818 of the 1442x818 viewport, so only the central
-third of the frame survives. Keep subjects on the camera's line of sight (target = subject),
-and keep wide groups within about +/-6 studs at 25-30 studs distance (fov 50).
+## Framing for the 9:16 crop (and `ROTATE_90` high-res mode)
+- **Standard (`ROTATE_90 = false`):** The recording is cropped to the middle 460x818 of the 1442x818 viewport, so only the central third survives.
+- **High-res 90° rotated capture (`ROTATE_90 = true`, default):** The client rolls the camera `-90°` (`cam.CFrame = CFrame.lookAt(eye, target) * CFrame.Angles(0, 0, math.rad(-90))`) and scales FOV (`math.clamp(fov * 0.65, 24, 42)`) so the full `1442x818` viewport records sideways (`818x1442` native portrait pixels, ~2x sharper). Passing `ROTATE_90=1` to `render.sh` crops `1442:818:291:148` and applies `transpose=1` before scaling to `1080x1920`.
+- Keep subjects on the camera's line of sight (target = subject), and keep wide groups within about +/-6 studs at 25-30 studs distance (fov 50).
 - Close-up of a face: eye about 6 studs in front at head height, fov 40-42.
 - Medium: 10-13 studs, fov 48-50. Wide street: 24-30 studs, fov 50-55.
 - Big props must stay smaller than the camera distance: a 24x cloud put the camera inside it
